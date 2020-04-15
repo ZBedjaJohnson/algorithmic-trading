@@ -43,8 +43,6 @@ class TestStrategy(bt.Strategy):
 
 
     def next(self):
-        # self.log('Close, %.2f' % self.dataclose[0])
-
         if self.order:
             return
 
@@ -52,14 +50,14 @@ class TestStrategy(bt.Strategy):
             if self.dataclose[0] < self.dataclose[-1]:
                 if self.dataclose[-1] < self.dataclose[-2]:
                     self.log('BUY CREATE, {}'.format(self.dataclose[0]))
-                    self.order = self.buy(size=2)
+                    self.order = self.buy()
 
         else:
             if len(self) > self.bar_executed + 1:
                 if self.dataclose[0] > self.dataclose[-1]:
                     if self.dataclose[-1] > self.dataclose[-2]:
                         self.log('SELL CREATE, {}'.format(self.dataclose[0]))
-                        self.order = self.sell(size=2)
+                        self.order = self.sell()
 
 def runstrat():
     cerebro = bt.Cerebro()
@@ -72,7 +70,7 @@ def runstrat():
     
     cerebro.addstrategy(TestStrategy)
 
-    cerebro.broker.setcash(1400.0)
+    cerebro.broker.setcash(1000)
     # cerebro.broker.setcommission(commission=0,margin=1)
     
     print('Starting Portfolio Value: {}'.format(cerebro.broker.getvalue()))
