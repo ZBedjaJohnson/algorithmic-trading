@@ -12,13 +12,15 @@ sandbox_url = 'https://sandbox.iexapis.com/stable/'
 
 def grab_day_minute(symbol,date,store=False,sandbox=False):
     """
-    Minuite OHLCV data for a specified date
+    Minuite OHLCV data for a specified day
 
     Date format - YYYYMMDD
 
     Sandbox (default false) - scrambled data for testing
 
-    Store (default false) - store returned dataframe
+    Store (default false) - store returned dataframe as csv
+
+    50 credits per day
     """
     if sandbox == True:
         warnings.warn('SANDBOX DATA')
@@ -39,4 +41,29 @@ def grab_day_minute(symbol,date,store=False,sandbox=False):
     return ohlcv
 
 
-grab_day_minute('TSLA','20200415',True)
+# grab_day_minute('AMD','20200408',True,True)
+
+def grab_month_minute(symbol,date,store=False,sandbox=False):
+    """
+    Minuite OHLCV data for a specified month
+
+    Date format - YYYYMM
+
+    Sandbox (default false) - scrambled data for testing
+
+    Store (default false) - store returned dataframe as csv
+
+    50 credits per day (30 day month 1500 credits)
+    """
+    days_ohlcv = []
+    for i in range(1,32):
+        print(i)
+        days_ohlcv.append(grab_day_minute('AMD','{}{:02d}'.format(date,i),False,sandbox))
+
+    month_ohlcv = pd.concat(days_ohlcv)
+    if store == True:
+        month_ohlcv.to_csv('./data/{}-{}-minute{}.csv'.format(symbol,date,'-SANDBOX' if sandbox == True else ''),index=False)
+
+    return month_ohlcv
+
+grab_month_minute('AMD',202003,True)
