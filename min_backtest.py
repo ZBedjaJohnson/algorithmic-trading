@@ -64,7 +64,7 @@ class TestStrategy(bt.Strategy):
 def runstrat():
     cerebro = bt.Cerebro()
 
-    datapath = ('./data/AMD-20200408-minute.csv')
+    datapath = ('./data/AMD-202003-minute.csv')
 
     data = data_formats.IEXMinuteCSV(dataname=datapath)
 
@@ -72,8 +72,8 @@ def runstrat():
     
     cerebro.addstrategy(TestStrategy)
 
-    cerebro.broker.setcash(10000.0)
-    cerebro.broker.setcommission(commission=1, margin=1)
+    cerebro.broker.setcash(1400.0)
+    # cerebro.broker.setcommission(commission=0,margin=1)
     
     print('Starting Portfolio Value: {}'.format(cerebro.broker.getvalue()))
 
