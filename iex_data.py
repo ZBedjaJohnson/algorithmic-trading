@@ -34,9 +34,9 @@ def grab_day_minute(symbol,date,store=False,sandbox=False):
     ohlcv = pd.DataFrame(raw, columns=['date','minute', 'marketOpen','marketHigh','marketLow','marketClose','marketVolume'])
     
     if store == True:
-        ohlcv.to_pickle('./data/{}-{}-minute{}.pkl'.format(symbol,date,'-SANDBOX' if sandbox == True else ''))
-        
+        # ohlcv.to_pickle('./data/{}-{}-minute{}.pkl'.format(symbol,date,'-SANDBOX' if sandbox == True else ''))
+        ohlcv.to_csv('./data/{}-{}-minute{}.csv'.format(symbol,date,'-SANDBOX' if sandbox == True else ''),index=False)
     return ohlcv
 
 
-grab_day_minute('TS','20200412',True)
+grab_day_minute('TSLA','20200415',True)
