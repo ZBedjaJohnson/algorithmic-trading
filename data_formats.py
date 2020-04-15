@@ -1,9 +1,13 @@
 import backtrader.feeds as btfeeds
+import backtrader as bt
 
 class IEXMinuteCSV(btfeeds.GenericCSVData):
 
   params = (
     ('nullvalue', 0.0),
+ 
+    ('timeframe', bt.TimeFrame.Minutes),
+
     ('dtformat', ('%Y-%m-%d')),
     ('tmformat', ('%H:%M')),
 
