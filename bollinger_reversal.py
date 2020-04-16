@@ -21,7 +21,7 @@ class TestStrategy(bt.Strategy):
 
         self.close_short_signal = self.dataclose <= self.bbands.bot
 
-        self.loss_perc = 0.001
+        self.loss_perc = 0.0005
         self.risk_perc = 0.01
 
     def notify_order(self, order):
