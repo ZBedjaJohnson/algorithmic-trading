@@ -7,10 +7,22 @@ class TestStrategy(bt.Strategy):
     def __init__(self):
         self.dataclose = self.datas[0].close
 
-        self.orefs = list()
+        self.bbands = btind.BollingerBands(period=20,devfactor=2)
 
-        self.loss_perc = 0.0025
-        self.risk_perc = 0.05
+        self.stoch = btind.Stochastic(period=14,period_dfast=3,period_dslow=3)
+
+        self.orders = list()
+
+        self.short_signal = bt.And(self.dataclose > self.bbands.top, self.stoch.percK > 80)
+
+        self.long_signal = bt.And(self.dataclose < self.bbands.bot, self.stoch.percK < 20)
+
+        self.close_long_signal = self.dataclose >= self.bbands.top
+
+        self.close_short_signal = self.dataclose <= self.bbands.bot
+
+        self.loss_perc = 0.001
+        self.risk_perc = 0.01
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -29,8 +41,7 @@ class TestStrategy(bt.Strategy):
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log('Order Canceled/Margin/Rejected')
 
-        self.orefs.remove(order.ref)
-
+        self.orders.remove(order)
 
     def notify_trade(self, trade):
         if not trade.isclosed:
@@ -45,22 +56,40 @@ class TestStrategy(bt.Strategy):
 
 
     def next(self):
-        if self.orefs:
+        if len(self.orders) > 1:
             return
+        elif len(self.orders) == 1:
+            if self.position.size > 0 and self.close_long_signal[0] == True:
+                mkt_sell = self.close(oco=self.orders[0])
+                self.orders.append(mkt_sell)
+                self.log('SELL CREATE CLOSE, Price: {}, QTY: {}'.format(self.dataclose[0],mkt_sell.size))
+
+            elif self.position.size < 0 and self.close_short_signal[0] == True:
+                mkt_buy = self.close(oco=self.orders[0])
+                self.orders.append(mkt_buy)
+                self.log('BUY CREATE CLOSE, Price: {}, QTY: {}'.format(self.dataclose[0],mkt_buy.size))
 
         if not self.position:
-            if self.dataclose[0] > self.dataclose[-1]:
-                if self.dataclose[-1] > self.dataclose[-2]:
-                    self.log('BUY CREATE, Price: {}, QTY: {}'.format(self.dataclose[0],self.pos_size()))
-                    mkt_buy = self.buy(size=self.pos_size(), exectype=bt.Order.Market, transmit=False)
-                    stp_sell = self.sell(price=self.stop_price(mkt_buy.isbuy()),size=mkt_buy.size, exectype=bt.Order.Stop, transmit=True,parent=mkt_buy)
-                    self.orefs.extend([mkt_buy.ref,stp_sell.ref])
+            if self.long_signal[0] == True:
+                mkt_buy = self.buy(size=self.pos_size(), exectype=bt.Order.Market, transmit=False)
+                stp_sell = self.sell(price=self.stop_price(mkt_buy.isbuy()),size=mkt_buy.size, exectype=bt.Order.Stop, transmit=True,parent=mkt_buy)
+                self.orders.extend([mkt_buy,stp_sell])
+                self.log('BUY CREATE, Price: {}, QTY: {}, Stop:{}'.format(self.dataclose[0],mkt_buy.size,stp_sell.price))
+
+            elif self.long_signal[0] == True:
+                mkt_sell = self.sell(size=self.pos_size(), exectype=bt.Order.Market, transmit=False)
+                stp_buy = self.buy(price=self.stop_price(mkt_sell.isbuy()),size=mkt_sell.size, exectype=bt.Order.Stop, transmit=True,parent=mkt_sell)
+                self.orders.extend([mkt_sell,stp_buy])
+                self.log('SELL CREATE, Price: {}, QTY: {}, Stop:{}'.format(self.dataclose[0],mkt_sell.size,stp_buy.price))
+
 
     def pos_size(self):
-        
+        maxS = (self.broker.get_cash() / self.dataclose[0]) * 0.9
+
         size = (self.broker.get_cash() * self.risk_perc) / (self.dataclose[0] * self.loss_perc)
 
-        return round(size,0)
+        return int(min(size,maxS))
+
 
     def stop_price(self,dir):
         if dir == True:
@@ -70,10 +99,11 @@ class TestStrategy(bt.Strategy):
 
         return round(stoploss,2)
 
+
 def runstrat():
     cerebro = bt.Cerebro()
 
-    datapath = ('./data/AMD-202002-minute.csv')
+    datapath = ('./data/AMD-202004-minute.csv')
 
     data = data_formats.IEXMinuteCSV(dataname=datapath)
 
@@ -82,7 +112,7 @@ def runstrat():
     cerebro.addstrategy(TestStrategy)
 
     cerebro.broker.setcash(10000)
-    cerebro.broker.setcommission(commission=0,leverage=20)
+    cerebro.broker.setcommission(commission=0,leverage=5)
     
     print('Starting Portfolio Value: {:.2f}'.format(cerebro.broker.getvalue()))
 
