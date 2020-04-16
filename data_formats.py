@@ -4,7 +4,7 @@ import backtrader as bt
 class IEXMinuteCSV(btfeeds.GenericCSVData):
 
   params = (
-    ('nullvalue', 0.0),
+    ('nullvalue', float('NaN')),
  
     ('timeframe', bt.TimeFrame.Minutes),
 
