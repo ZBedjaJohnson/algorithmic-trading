@@ -57,8 +57,10 @@ def grab_month_minute(symbol,date,store=False,sandbox=False):
     """
     days_ohlcv = []
     for i in range(1,32):
-        print(i)
-        days_ohlcv.append(grab_day_minute('AMD','{}{:02d}'.format(date,i),False,sandbox))
+        try:
+            days_ohlcv.append(grab_day_minute('AMD','{}{:02d}'.format(date,i),False,sandbox))
+        except:
+            pass
 
     month_ohlcv = pd.concat(days_ohlcv)
     if store == True:
@@ -66,4 +68,4 @@ def grab_month_minute(symbol,date,store=False,sandbox=False):
 
     return month_ohlcv
 
-grab_month_minute('AMD',202003,True)
+grab_month_minute('AMD',202004,True)
