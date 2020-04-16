@@ -11,7 +11,7 @@ class TestStrategy(bt.Strategy):
 
         self.stoch = btind.Stochastic(period=14,period_dfast=3,period_dslow=3)
 
-        self.order = None
+        self.orefs = list()
 
         self.short_signal = bt.And(self.dataclose > self.bbands.top, self.stoch.percK > 80)
 
@@ -34,14 +34,14 @@ class TestStrategy(bt.Strategy):
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log('Order Canceled/Margin/Rejected')
 
-        self.order = None
+        self.orefs.remove(order.ref)
 
 
     def notify_trade(self, trade):
         if not trade.isclosed:
             return
 
-        self.log('OPERATION PROFIT, GROSS {}, NET {}'.format(trade.pnl, trade.pnlcomm))
+        self.log('OPERATION PROFIT, GROSS {:.2f}, NET {:.2f}'.format(trade.pnl, trade.pnlcomm))
                     
 
     def log(self, txt):
@@ -50,31 +50,34 @@ class TestStrategy(bt.Strategy):
 
 
     def next(self):
-        if self.order:
+        if self.orefs:
             return
 
         if not self.position:
             if self.long_signal[0] == True:
                 self.log('BUY CREATE, {}'.format(self.dataclose[0]))
-                self.order = self.buy(size=100)
+                mkt_buy = self.buy(size=100)
+                self.orefs.append(mkt_buy.ref)
 
             elif self.short_signal[0] == True:
-                    self.log('SELL CREATE, {}'.format(self.dataclose[0]))
-                    self.order = self.sell(size=100)
-
+                self.log('SELL CREATE, {}'.format(self.dataclose[0]))
+                mkt_sell = self.sell(size=100)
+                self.orefs.append(mkt_sell.ref)
         else:
             if self.position.size > 0 and self.short_signal[0] == True:
                 self.log('SELL CREATE, {}'.format(self.dataclose[0]))
-                self.order = self.sell(size=100)
+                mkt_sell = self.sell(size=100)
+                self.orefs.append(mkt_sell.ref)
 
             elif self.position.size < 0 and self.long_signal[0] == True:
                 self.log('BUY CREATE, {}'.format(self.dataclose[0]))
-                self.order = self.buy(size=100)
+                mkt_buy = self.buy(size=100)
+                self.orefs.append(mkt_buy.ref)
 
 def runstrat():
     cerebro = bt.Cerebro()
 
-    datapath = ('./data/AMD-202003-minute.csv')
+    datapath = ('./data/AMD-202004-minute.csv')
 
     data = data_formats.IEXMinuteCSV(dataname=datapath)
 
@@ -83,13 +86,13 @@ def runstrat():
     cerebro.addstrategy(TestStrategy)
 
     cerebro.broker.setcash(10000)
-    cerebro.broker.setcommission(commission=0.0001)
+    # cerebro.broker.setcommission(commission=0.0001)
     
-    print('Starting Portfolio Value: {}'.format(cerebro.broker.getvalue()))
+    print('Starting Portfolio Value: {:.2f}'.format(cerebro.broker.getvalue()))
 
     cerebro.run()
 
-    print('Final Portfolio Value: {}'.format(cerebro.broker.getvalue()))
+    print('Final Portfolio Value: {:.2f}'.format(cerebro.broker.getvalue()))
 
     cerebro.plot()
 
