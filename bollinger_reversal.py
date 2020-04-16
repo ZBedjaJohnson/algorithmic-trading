@@ -13,9 +13,9 @@ class TestStrategy(bt.Strategy):
 
         self.order = None
 
-        self.long_signal = bt.And(self.dataclose > self.bbands.top, self.stoch.percK > 80)
+        self.short_signal = bt.And(self.dataclose > self.bbands.top, self.stoch.percK > 80)
 
-        self.short_signal = bt.And(self.dataclose < self.bbands.bot, self.stoch.percK < 20)
+        self.long_signal = bt.And(self.dataclose < self.bbands.bot, self.stoch.percK < 20)
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -58,29 +58,23 @@ class TestStrategy(bt.Strategy):
                 self.log('BUY CREATE, {}'.format(self.dataclose[0]))
                 self.order = self.buy(size=100)
 
-            # elif self.short_signal[0] == True:
-            #         self.log('SELL CREATE, {}'.format(self.dataclose[0]))
-            #         self.order = self.sell()
+            elif self.short_signal[0] == True:
+                    self.log('SELL CREATE, {}'.format(self.dataclose[0]))
+                    self.order = self.sell(size=100)
 
         else:
-            # if len(self) >= self.bar_executed + 5:
-            if self.dataclose[0] > self.dataclose[-1]:
-                    if self.dataclose[-1] > self.dataclose[-2]:
-                        self.log('SELL CREATE, {}'.format(self.dataclose[0]))
-                        self.order = self.sell(size=100)
+            if self.position.size > 0 and self.short_signal[0] == True:
+                self.log('SELL CREATE, {}'.format(self.dataclose[0]))
+                self.order = self.sell(size=100)
 
-        # self.log('LONG: {}, SHORT: {}'.format(self.long_signal[0],self.short_signal[0]))
-
-        # self.log('BUY CREATE, {}'.format(self.dataclose[0]))
-        # self.order = self.buy()
-
-        # self.log('SELL CREATE, {}'.format(self.dataclose[0]))
-        # self.order = self.sell()
+            elif self.position.size < 0 and self.long_signal[0] == True:
+                self.log('BUY CREATE, {}'.format(self.dataclose[0]))
+                self.order = self.buy(size=100)
 
 def runstrat():
     cerebro = bt.Cerebro()
 
-    datapath = ('./data/AMD-202004-minute.csv')
+    datapath = ('./data/AMD-202003-minute.csv')
 
     data = data_formats.IEXMinuteCSV(dataname=datapath)
 
@@ -89,7 +83,7 @@ def runstrat():
     cerebro.addstrategy(TestStrategy)
 
     cerebro.broker.setcash(10000)
-    # cerebro.broker.setcommission(commission=0,margin=1)
+    cerebro.broker.setcommission(commission=0.0001)
     
     print('Starting Portfolio Value: {}'.format(cerebro.broker.getvalue()))
 
