@@ -10,4 +10,6 @@ API Keys stored within env as so;
 -   ./etc/conda/deactivate.d/env_vars.sh
 
 -   Quandl public key = 'QUANDL'
--   IEX Cloud secret = 'IEX_API_KEY'
+-   IEX Cloud = 'IEX_SECRET'
+-   IEX Cloud Sandbox = 'IEX_SANDBOX'
+-   Alpha Vantage Key = 'ALPHA_VANTAGE'

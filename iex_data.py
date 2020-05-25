@@ -68,4 +68,6 @@ def grab_month_minute(symbol,date,store=False,sandbox=False):
 
     return month_ohlcv
 
-grab_month_minute('AMD',202004,True)
+grab_month_minute('TSLA',202004,True)
+
+# remove the lines with ,,

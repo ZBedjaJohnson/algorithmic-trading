@@ -9,7 +9,7 @@ class TestStrategy(bt.Strategy):
 
         self.bbands = btind.BollingerBands(period=20,devfactor=2)
 
-        self.stoch = btind.Stochastic(period=14,period_dfast=3,period_dslow=3)
+        self.stoch = btind.Stochastic(period=7,period_dfast=14,period_dslow=3)
 
         self.orders = list()
 
@@ -21,8 +21,8 @@ class TestStrategy(bt.Strategy):
 
         self.close_short_signal = self.dataclose <= self.bbands.bot
 
-        self.loss_perc = 0.0005
-        self.risk_perc = 0.01
+        self.loss_perc = 0.05
+        self.risk_perc = 0.02
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -76,7 +76,7 @@ class TestStrategy(bt.Strategy):
                 self.orders.extend([mkt_buy,stp_sell])
                 self.log('BUY CREATE, Price: {}, QTY: {}, Stop:{}'.format(self.dataclose[0],mkt_buy.size,stp_sell.price))
 
-            elif self.long_signal[0] == True:
+            elif self.short_signal[0] == True:
                 mkt_sell = self.sell(size=self.pos_size(), exectype=bt.Order.Market, transmit=False)
                 stp_buy = self.buy(price=self.stop_price(mkt_sell.isbuy()),size=mkt_sell.size, exectype=bt.Order.Stop, transmit=True,parent=mkt_sell)
                 self.orders.extend([mkt_sell,stp_buy])
@@ -103,7 +103,7 @@ class TestStrategy(bt.Strategy):
 def runstrat():
     cerebro = bt.Cerebro()
 
-    datapath = ('./data/AMD-202004-minute.csv')
+    datapath = ('./data/NET-202003-minute.csv')
 
     data = data_formats.IEXMinuteCSV(dataname=datapath)
 
@@ -111,8 +111,8 @@ def runstrat():
     
     cerebro.addstrategy(TestStrategy)
 
-    cerebro.broker.setcash(10000)
-    cerebro.broker.setcommission(commission=0,leverage=5)
+    cerebro.broker.setcash(1000)
+    cerebro.broker.setcommission(commission=0)
     
     print('Starting Portfolio Value: {:.2f}'.format(cerebro.broker.getvalue()))
 
@@ -120,7 +120,7 @@ def runstrat():
 
     print('Final Portfolio Value: {:.2f}'.format(cerebro.broker.getvalue()))
 
-    # cerebro.plot()
+    cerebro.plot()
 
 
 if __name__ == '__main__':
