@@ -77,7 +77,7 @@ class TestStrategy(bt.Strategy):
 def runstrat():
     cerebro = bt.Cerebro()
 
-    datapath = ('./data/AMD-202004-minute.csv')
+    datapath = ('./data/NET-202003-minute.csv')
 
     data = data_formats.IEXMinuteCSV(dataname=datapath)
 

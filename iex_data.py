@@ -10,7 +10,7 @@ IEX_SANDBOX = os.environ.get('IEX_SANDBOX')
 base_url = 'https://cloud.iexapis.com/stable/'
 sandbox_url = 'https://sandbox.iexapis.com/stable/'
 
-def grab_day_minute(symbol,date,store=False,sandbox=False):
+def pull_day_minute(symbol,date,store=False,sandbox=False):
     """
     Minuite OHLCV data for a specified day
 
@@ -22,7 +22,7 @@ def grab_day_minute(symbol,date,store=False,sandbox=False):
 
     50 credits per day
     """
-    if sandbox == True:
+    if sandbox:
         warnings.warn('SANDBOX DATA')
         req = requests.get('{}/stock/{}/chart/date/{}?token={}'.format(sandbox_url,symbol,date,IEX_SANDBOX))
     else:
@@ -35,15 +35,16 @@ def grab_day_minute(symbol,date,store=False,sandbox=False):
 
     ohlcv = pd.DataFrame(raw, columns=['date','minute', 'marketOpen','marketHigh','marketLow','marketClose','marketVolume'])
     
-    if store == True:
+    ohlcv = ohlcv[ohlcv['marketVolume'] > 1]
+
+    if store:
         # ohlcv.to_pickle('./data/{}-{}-minute{}.pkl'.format(symbol,date,'-SANDBOX' if sandbox == True else ''))
         ohlcv.to_csv('./data/{}-{}-minute{}.csv'.format(symbol,date,'-SANDBOX' if sandbox == True else ''),index=False)
-    return ohlcv
+        print('Saved to','./data/{}-{}-minute{}.csv'.format(symbol,date,'-SANDBOX' if sandbox == True else ''))
+    else:
+        return ohlcv
 
-
-# grab_day_minute('AMD','20200408',True,True)
-
-def grab_month_minute(symbol,date,store=False,sandbox=False):
+def pull_month_minute(symbol,date,store=False,sandbox=False):
     """
     Minuite OHLCV data for a specified month
 
@@ -58,16 +59,19 @@ def grab_month_minute(symbol,date,store=False,sandbox=False):
     days_ohlcv = []
     for i in range(1,32):
         try:
-            days_ohlcv.append(grab_day_minute('AMD','{}{:02d}'.format(date,i),False,sandbox))
+            days_ohlcv.append(pull_day_minute('AMD','{}{:02d}'.format(date,i),False,sandbox))
         except:
             pass
 
     month_ohlcv = pd.concat(days_ohlcv)
-    if store == True:
+    if store:
         month_ohlcv.to_csv('./data/{}-{}-minute{}.csv'.format(symbol,date,'-SANDBOX' if sandbox == True else ''),index=False)
+        print('Saved to','./data/{}-{}-minute{}.csv'.format(symbol,date,'-SANDBOX' if sandbox == True else ''))
+    else:
+        return month_ohlcv
 
-    return month_ohlcv
 
-grab_month_minute('TSLA',202004,True)
+if __name__ == "__main__":
 
-# remove the lines with ,,
+    # pull_month_minute('NET',202003,True)
+    data = pull_day_minute('NET',20200312)

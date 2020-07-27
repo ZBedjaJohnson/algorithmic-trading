@@ -21,8 +21,8 @@ class TestStrategy(bt.Strategy):
 
         self.close_short_signal = self.dataclose <= self.bbands.bot
 
-        self.loss_perc = 0.05
-        self.risk_perc = 0.02
+        self.loss_perc = 0.01
+        self.risk_perc = 0.1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -111,7 +111,7 @@ def runstrat():
     
     cerebro.addstrategy(TestStrategy)
 
-    cerebro.broker.setcash(1000)
+    cerebro.broker.setcash(10000)
     cerebro.broker.setcommission(commission=0)
     
     print('Starting Portfolio Value: {:.2f}'.format(cerebro.broker.getvalue()))
