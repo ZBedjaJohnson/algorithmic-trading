@@ -2,14 +2,15 @@ import backtrader as bt
 import backtrader.feeds as btfeeds
 import backtrader.indicators as btind
 import data_formats
+import datetime
 
-class TestStrategy(bt.Strategy):
+class ReversalStrategy(bt.Strategy):
     def __init__(self):
         self.dataclose = self.datas[0].close
 
         self.bbands = btind.BollingerBands(period=20,devfactor=2)
 
-        self.stoch = btind.Stochastic(period=7,period_dfast=14,period_dslow=3)
+        self.stoch = btind.Stochastic(period=14,period_dfast=3,period_dslow=3)
 
         self.orders = list()
 
@@ -21,8 +22,7 @@ class TestStrategy(bt.Strategy):
 
         self.close_short_signal = self.dataclose <= self.bbands.bot
 
-        self.loss_perc = 0.01
-        self.risk_perc = 0.1
+        self.loss_perc = 0.025
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -56,6 +56,19 @@ class TestStrategy(bt.Strategy):
 
 
     def next(self):
+        # Do not hold overnight, refactor this into a func
+        if self.position.size != 0:
+            if self.data.datetime.time() > datetime.time(15,30):
+                if self.position.size > 0:
+                    mkt_sell = self.close(oco=self.orders[0])
+                    self.orders.append(mkt_sell)
+                    self.log('SELL CREATE CLOSE, Price: {}, QTY: {}'.format(self.dataclose[0],mkt_sell.size))
+
+                elif self.position.size < 0:
+                    mkt_buy = self.close(oco=self.orders[0])
+                    self.orders.append(mkt_buy)
+                    self.log('BUY CREATE CLOSE, Price: {}, QTY: {}'.format(self.dataclose[0],mkt_buy.size))
+
         if len(self.orders) > 1:
             return
         elif len(self.orders) == 1:
@@ -84,11 +97,10 @@ class TestStrategy(bt.Strategy):
 
 
     def pos_size(self):
-        maxS = (self.broker.get_cash() / self.dataclose[0]) * 0.9
+        maxS = (self.broker.get_cash() * 4 / self.dataclose[0])
 
-        size = (self.broker.get_cash() * self.risk_perc) / (self.dataclose[0] * self.loss_perc)
-
-        return int(min(size,maxS))
+        return int(maxS)
+        # Update this with risk % when using multiple concurrent statergies / instruments
 
 
     def stop_price(self,dir):
@@ -100,19 +112,17 @@ class TestStrategy(bt.Strategy):
         return round(stoploss,2)
 
 
-def runstrat():
+def runstrat(datapath):
     cerebro = bt.Cerebro()
-
-    datapath = ('./data/NET-202003-minute.csv')
 
     data = data_formats.IEXMinuteCSV(dataname=datapath)
 
     cerebro.adddata(data)
     
-    cerebro.addstrategy(TestStrategy)
+    cerebro.addstrategy(ReversalStrategy)
 
-    cerebro.broker.setcash(10000)
-    cerebro.broker.setcommission(commission=0)
+    cerebro.broker.setcash(50000)
+    cerebro.broker.setcommission(commission=0,leverage=4)
     
     print('Starting Portfolio Value: {:.2f}'.format(cerebro.broker.getvalue()))
 
@@ -124,4 +134,4 @@ def runstrat():
 
 
 if __name__ == '__main__':
-    runstrat()
+    runstrat('./data/SPY-202007-minute.csv')

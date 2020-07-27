@@ -59,7 +59,7 @@ def pull_month_minute(symbol,date,store=False,sandbox=False):
     days_ohlcv = []
     for i in range(1,32):
         try:
-            days_ohlcv.append(pull_day_minute('AMD','{}{:02d}'.format(date,i),False,sandbox))
+            days_ohlcv.append(pull_day_minute(symbol,'{}{:02d}'.format(date,i),False,sandbox))
         except:
             pass
 
@@ -73,5 +73,5 @@ def pull_month_minute(symbol,date,store=False,sandbox=False):
 
 if __name__ == "__main__":
 
-    # pull_month_minute('NET',202003,True)
-    data = pull_day_minute('NET',20200312)
+    pull_month_minute('SPY',202007,True)
+    # data = pull_day_minute('SPY',20200312)
